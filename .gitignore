@@ -1,0 +1,4 @@
+.env
+pgbackrest-repo/
+logs/
+*.log

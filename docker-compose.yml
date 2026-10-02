@@ -1,0 +1,113 @@
+services:
+
+  etcd1:
+    image: quay.io/coreos/etcd:v3.5.15
+    container_name: patroni-etcd1
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd1
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd1:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd1:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=patroni-dev291
+    volumes:
+      - etcd1-data:/etcd-data
+    networks: [patroni-net]
+
+  etcd2:
+    image: quay.io/coreos/etcd:v3.5.15
+    container_name: patroni-etcd2
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd2
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd2:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd2:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=patroni-dev291
+    volumes:
+      - etcd2-data:/etcd-data
+    networks: [patroni-net]
+
+  etcd3:
+    image: quay.io/coreos/etcd:v3.5.15
+    container_name: patroni-etcd3
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd3
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd3:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd3:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=patroni-dev291
+    volumes:
+      - etcd3-data:/etcd-data
+    networks: [patroni-net]
+
+  pg1:
+    build: ./patroni
+    container_name: patroni-pg1
+    hostname: pg1
+    environment:
+      PATRONI_NAME: pg1
+    volumes:
+      - pg1-data:/var/lib/postgresql/data
+      - ./patroni/patroni-pg1.yml:/etc/patroni/patroni.yml:ro
+      - ./pgbackrest-repo:/var/lib/pgbackrest
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+    networks: [patroni-net]
+
+  pg2:
+    build: ./patroni
+    container_name: patroni-pg2
+    hostname: pg2
+    environment:
+      PATRONI_NAME: pg2
+    volumes:
+      - pg2-data:/var/lib/postgresql/data
+      - ./patroni/patroni-pg2.yml:/etc/patroni/patroni.yml:ro
+      - ./pgbackrest-repo:/var/lib/pgbackrest
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+    networks: [patroni-net]
+
+  pg3:
+    build: ./patroni
+    container_name: patroni-pg3
+    hostname: pg3
+    environment:
+      PATRONI_NAME: pg3
+    volumes:
+      - pg3-data:/var/lib/postgresql/data
+      - ./patroni/patroni-pg3.yml:/etc/patroni/patroni.yml:ro
+      - ./pgbackrest-repo:/var/lib/pgbackrest
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+    networks: [patroni-net]
+
+  haproxy:
+    image: haproxy:3.1
+    container_name: patroni-haproxy
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    networks: [patroni-net]
+
+networks:
+  patroni-net:
+
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+  pg1-data:
+  pg2-data:
+  pg3-data:
